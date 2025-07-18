@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Malla Turismo UNLa - Modo Oscuro</title>
+  <style>
+    body {
+      background-color: #1c1c1c;
+      color: #f0f0f0;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .column {
+      width: 18%;
+      min-width: 180px;
+      margin: 1%;
+    }
+    .column h2 {
+      text-align: center;
+      background-color: #333;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    .materia {
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      font-weight: bold;
+      text-align: center;
+      opacity: 0.5;
+      cursor: not-allowed;
+      color: #fff;
+      transition: all 0.3s ease;
+    }
+    .habilitada {
+      cursor: pointer;
+      opacity: 1;
+    }
+    .nocursada {
+      background-color: #2f2f2f;
+    }
+    .cursada {
+      background-color: #6ec1e4; /* celeste */
+    }
+    .final {
+      background-color: #1f78d1; /* azul */
+      text-decoration: line-through;
+    }
+    .solo-cursada {
+      background-color: #b68cf2; /* lila */
+    }
+    .cursada-y-final {
+      background-color: #8e44ad; /* violeta fuerte */
+    }
+  </style>
+</head>
+<body>
+  <h1>Malla Interactiva - Turismo UNLa (Modo Oscuro)</h1>
+  <div class="container" id="malla">
+    <div class="column" id="y1"><h2>1° Año</h2></div>
+    <div class="column" id="y2"><h2>2° Año</h2></div>
+    <div class="column" id="y3"><h2>3° Año</h2></div>
+    <div class="column" id="y4"><h2>4° Año</h2></div>
+    <div class="column" id="y5"><h2>5° Año</h2></div>
+    <div class="column" id="yX"><h2>Complementarias</h2></div>
+  </div>
+
+  <script>
+    const materias = {
+      "09": { nombre: "Servicios Turísticos I", correlativas: ["05"], anio: 2 },
+      "14": { nombre: "Servicios Turísticos II", correlativas: ["09"], anio: 2 },
+      "05": { nombre: "Org. y Gestión de la Empresa Turística", correlativas: ["01"], anio: 1 },
+      "01": { nombre: "Introducción al Turismo", correlativas: [], anio: 1 }
+      // Podés seguir agregando el resto acá
+    };
+
+    const estados = JSON.parse(localStorage.getItem("estado_malla_viz") || "{}");
+
+    function puedeCursar(codigo) {
+      const mat = materias[codigo];
+      return mat.correlativas.every(c => estados[c] >= 1);
+    }
+
+    function puedeFinal(codigo) {
+      const mat = materias[codigo];
+      return mat.correlativas.every(c => estados[c] === 2);
+    }
+
+    function crearMalla() {
+      for (let i = 1; i <= 5; i++) document.getElementById("y" + i).innerHTML = "<h2>" + i + "° Año</h2>";
+      document.getElementById("yX").innerHTML = "<h2>Complementarias</h2>";
+
+      for (let codigo in materias) {
+        const mat = materias[codigo];
+        const div = document.createElement("div");
+        div.className = "materia nocursada";
+        div.textContent = codigo + " - " + mat.nombre;
+
+        let estado = estados[codigo] || 0;
+        const puedeCursarMateria = puedeCursar(codigo);
+        const puedeFinalMateria = puedeFinal(codigo);
+
+        if (estado === 1) {
+          div.className = "materia cursada habilitada";
+        } else if (estado === 2) {
+          div.className = "materia final habilitada";
+        } else if (puedeCursarMateria && !puedeFinalMateria) {
+          div.className = "materia solo-cursada habilitada";
+        } else if (puedeFinalMateria) {
+          div.className = "materia cursada-y-final habilitada";
+        }
+
+        if (div.classList.contains("habilitada")) {
+          div.addEventListener("click", () => {
+            let estadoActual = estados[codigo] || 0;
+            estadoActual = (estadoActual + 1) % 3;
+            estados[codigo] = estadoActual;
+            localStorage.setItem("estado_malla_viz", JSON.stringify(estados));
+            crearMalla();
+          });
+        }
+
+        document.getElementById("y" + mat.anio).appendChild(div);
+      }
+    }
+
+    crearMalla();
+  </script>
+</body>
+</html>
